@@ -1,6 +1,7 @@
 import os
 import glob
 import pandas as pd
+from datetime import datetime
 
 # Lists of possible values
 accounts = ["wea", "tan", "sim", "td"]
@@ -9,80 +10,95 @@ months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"
 
 # The folder where the CSV files are stored, within the Repl environment
 folder_path = "./statements"
+# Define the current year for validation
+current_year = datetime.now().year
 
-# Function to find CSV files and compile their data
+# Function to validate the year and month from the filename
+def is_valid_year(year):
+    return year.isdigit() and 1900 <= int(year) <= current_year
+
+def is_valid_month(month):
+    return month in months
+
 def find_and_compile_csv_files():
     all_data = []  # This list will store DataFrames for each file
-
-    found_files = []  # List to keep track of found files
-    not_found_patterns = []  # List to keep track of patterns with no matching files
+    valid_files = []  # List to keep track of valid files
+    invalid_files = []  # List to keep track of invalid files
+    non_csv_files = []  # List to keep track of non-CSV files
 
     print("Starting to search for files...")
 
     try:
-        # Step 1: Loop through possible values to find files
-        for account in accounts:
-            for account_type in types:
-                for month in months:
-                    # Construct the pattern to match filenames with any year
-                    pattern = f"{folder_path}/*_{month}_{account}_{account_type}.csv"
-                    matching_files = glob.glob(pattern)
+        # Look for all files in the folder
+        all_files = glob.glob(os.path.join(folder_path, "*"))
 
-                    # If files are found
-                    if matching_files:
-                        for file_path in matching_files:
-                            file_name = os.path.basename(file_path)
-                            found_files.append(file_name)
+        for file_path in all_files:
+            file_name = os.path.basename(file_path)
 
-                            # Extract the year from the filename (first part before the first "_")
-                            year = file_name.split('_')[0]
+            # Skip non-CSV files
+            if not file_name.endswith(".csv"):
+                non_csv_files.append(file_name)
+                continue
 
-                            # Read the CSV file into a DataFrame
-                            df = pd.read_csv(file_path)
+            # Check the filename structure
+            parts = file_name.split('_')
+            if len(parts) == 4:
+                # Extract values
+                year, month, account, account_type_with_ext = parts
+                account_type = account_type_with_ext.replace(".csv", "")
 
-                            # Add columns for the metadata (year, month, account, type)
-                            df['year'] = year
-                            df['month'] = month
-                            df['account'] = account
-                            df['type'] = account_type
+                # Validate extracted parts
+                if is_valid_year(year) and is_valid_month(month) and account in accounts and account_type in types:
+                    valid_files.append(file_name)
 
-                            # Add this DataFrame to the list of all data
-                            all_data.append(df)
-                    else:
-                        not_found_patterns.append(pattern)
-        
+                    # Read the CSV file into a DataFrame
+                    df = pd.read_csv(file_path)
+
+                    # Add metadata columns
+                    df['year'] = year
+                    df['month'] = month
+                    df['account'] = account
+                    df['type'] = account_type
+
+                    # Add this DataFrame to the list of all data
+                    all_data.append(df)
+                else:
+                    invalid_files.append(file_name)
+            else:
+                invalid_files.append(file_name)
+
         print("Finished searching for files.")
-        print("Files found:")
-        for file in found_files:
+        print("Valid files found and processed:")
+        for file in valid_files:
             print(f"- {file}")
 
-        print("\nPatterns with no matching files:")
-        for pattern in not_found_patterns:
-            print(f"- {pattern}")
+        print("\nInvalid files (incorrect structure):")
+        for file in invalid_files:
+            print(f"- {file}")
 
-        # Check if any data was collected
+        print("\nNon-CSV files (skipped):")
+        for file in non_csv_files:
+            print(f"- {file}")
+
         if not all_data:
-            print("No data found to combine.")
-            print("Script ended because no data was collected.")
+            print("\nNo data found to combine. Script ended because no data was collected.")
             return
 
-        # Step 2: Combine all the DataFrames in the list into one large DataFrame
+        # Combine all the DataFrames in the list into one large DataFrame
         combined_df = pd.concat(all_data, ignore_index=True)
-        print("Data successfully combined.")
+        print("\nData successfully combined.")
 
-        # Step 3: Define the path for the output Excel file
-        output_path = os.path.join(folder_path, "combined_statements.xlsx")
+        # Define the path for the output Excel file outside the statements folder
+        output_path = os.path.join(".", "combined_statements.xlsx")
 
         # Write the combined DataFrame to an Excel file
         combined_df.to_excel(output_path, index=False)
         print(f"Attempted to write combined data to {output_path}")
 
-        # Check if the Excel file was created successfully and print the result
         if os.path.exists(output_path):
             print(f"\nCombined data written to {output_path} successfully.")
         else:
-            print(f"\nFailed to write combined data to {output_path}.")
-            print("Script ended because writing to Excel failed.")
+            print(f"\nFailed to write combined data to {output_path}. Script ended because writing to Excel failed.")
             return
 
     except Exception as e:
