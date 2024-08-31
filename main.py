@@ -119,25 +119,23 @@ def find_and_compile_csv_files():
         output_path = os.path.join(".", "combined_statements.xlsx")
 
         # Write the combined DataFrame to an Excel file
-        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-            combined_df.to_excel(writer, index=False, sheet_name='Sheet1')
+        combined_df.to_excel(output_path, index=False, sheet_name='Sheet1')
 
-            # Load the workbook and select the active worksheet
-            writer.save()
-            workbook = load_workbook(output_path)
-            worksheet = workbook.active
+        # Load the workbook and select the active worksheet
+        workbook = load_workbook(output_path)
+        worksheet = workbook.active
 
-            # Define the range and create a table
-            table = Table(displayName="CombinedDataTable", ref=f"A1:H{len(combined_df) + 1}")
+        # Define the range and create a table
+        table = Table(displayName="CombinedDataTable", ref=f"A1:H{len(combined_df) + 1}")
 
-            # Add a default style with stripes
-            style = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=False,
-                                   showLastColumn=False, showRowStripes=True, showColumnStripes=True)
-            table.tableStyleInfo = style
-            worksheet.add_table(table)
+        # Add a default style with stripes
+        style = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=False,
+                               showLastColumn=False, showRowStripes=True, showColumnStripes=True)
+        table.tableStyleInfo = style
+        worksheet.add_table(table)
 
-            # Save the workbook
-            workbook.save(output_path)
+        # Save the workbook
+        workbook.save(output_path)
 
         print(f"Attempted to write combined data to {output_path}")
 
