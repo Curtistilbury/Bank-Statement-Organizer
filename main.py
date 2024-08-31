@@ -21,7 +21,7 @@ def detect_transfers(transactions):
     non_transfers = []
 
     for t in transactions:
-        description = t['Description'].lower()
+        description = t['description'].lower()
         if 'transfer' in description:
             transfers.append(t)
         else:
@@ -34,11 +34,11 @@ def match_transfers(transfers):
     matched_transfers = []
 
     for t in transfers:
-        if t['Amount'] not in transfer_dict:
-            transfer_dict[t['Amount']] = t
+        if t['amount'] not in transfer_dict:
+            transfer_dict[t['amount']] = t
         else:
-            matched_transfers.append((transfer_dict[t['Amount']], t))
-            del transfer_dict[t['Amount']]
+            matched_transfers.append((transfer_dict[t['amount']], t))
+            del transfer_dict[t['amount']]
 
     return matched_transfers
 
@@ -49,7 +49,7 @@ def reconcile_data(transactions, matched_transfers):
 
     for t in transactions:
         if t in [pair[0] for pair in matched_transfers] or t in [pair[1] for pair in matched_transfers]:
-            matched_ids.add(t['Description'])
+            matched_ids.add(t['description'])
         else:
             reconciled_transactions.append(t)
 
@@ -58,13 +58,13 @@ def reconcile_data(transactions, matched_transfers):
 def write_to_excel(data, output_file):
     wb = Workbook()
     ws = wb.active
-    ws.title = "Transactions"
+    ws.title = "transactions"
 
-    headers = ['Date', 'Description', 'Amount', 'Account Type']
+    headers = ['date', 'description', 'amount', 'account type']
     ws.append(headers)
 
     for row in data:
-        ws.append([row['Date'], row['Description'], row['Amount'], row['Account Type']])
+        ws.append([row['date'], row['description'], row['amount'], row['transaction']])
 
     wb.save(output_file)
 
@@ -85,8 +85,8 @@ def budget_comparison(transactions, budget):
     category_spent = {}
 
     for t in transactions:
-        category = t['Account Type']
-        amount = float(t['Amount'])
+        category = t['transaction']
+        amount = float(t['amount'])
         if category in category_spent:
             category_spent[category] += amount
         else:
@@ -101,7 +101,7 @@ def budget_comparison(transactions, budget):
     return comparison
 
 # File paths to your CSV files
-file_paths = ['chequing.csv', 'savings.csv', 'credit_card.csv', 'chequing_bills.csv']
+file_paths = ['chequing.csv', 'chequing_bills.csv']
 output_file = 'budget_tracker.xlsx'
 
 # Compile and reconcile data
@@ -121,3 +121,5 @@ planned_budget = {
 # Compare and write budget comparison
 comparison_data = budget_comparison(reconciled_data, planned_budget)
 write_budget_comparison(comparison_data, output_file)
+
+if (__name__ == '__main__'): pass
