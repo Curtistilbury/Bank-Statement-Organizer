@@ -115,6 +115,10 @@ def find_and_compile_csv_files():
         combined_df = pd.concat(all_data, ignore_index=True)
         print("\nData successfully combined.")
 
+        # Sort the combined DataFrame by the Date column
+        combined_df.sort_values(by='Date', inplace=True)
+        print("\nData successfully sorted by Date.")
+        
         # Define the path for the output Excel file outside the statements folder
         output_path = os.path.join(".", "combined_statements.xlsx")
 
