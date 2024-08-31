@@ -1,6 +1,7 @@
 import csv
 from openpyxl import Workbook
 
+# Open the CSV file
 def read_csv(file_path):
     data = []
     with open(file_path, mode='r') as file:
@@ -81,24 +82,7 @@ def write_budget_comparison(comparison_data, output_file):
 
     wb.save(output_file)
 
-def budget_comparison(transactions, budget):
-    category_spent = {}
 
-    for t in transactions:
-        category = t['transaction']
-        amount = float(t['amount'])
-        if category in category_spent:
-            category_spent[category] += amount
-        else:
-            category_spent[category] = amount
-
-    comparison = []
-    for category, planned_amount in budget.items():
-        spent = category_spent.get(category, 0)
-        difference = planned_amount - spent
-        comparison.append([category, planned_amount, spent, difference])
-
-    return comparison
 
 # File paths to your CSV files
 file_paths = ['chequing.csv', 'chequing_bills.csv']
@@ -111,15 +95,6 @@ matched_transfers = match_transfers(transfers)
 reconciled_data = reconcile_data(non_transfers, matched_transfers)
 write_to_excel(reconciled_data, output_file)
 
-# Budget data (example)
-planned_budget = {
-    'Food': 300,
-    'Rent': 1200,
-    'Utilities': 150
-}
-
-# Compare and write budget comparison
-comparison_data = budget_comparison(reconciled_data, planned_budget)
-write_budget_comparison(comparison_data, output_file)
+print(compiled_data)
 
 if (__name__ == '__main__'): pass
