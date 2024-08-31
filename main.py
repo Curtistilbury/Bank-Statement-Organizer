@@ -22,7 +22,7 @@ def detect_transfers(transactions):
 
     for t in transactions:
         description = t['description'].lower()
-        if 'transfer' in description:
+        if 'Transfer in' or 'Transfer out' in description:
             transfers.append(t)
         else:
             non_transfers.append(t)
