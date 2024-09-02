@@ -7,7 +7,7 @@ from openpyxl.worksheet.table import Table, TableStyleInfo
 
 # Lists of possible values
 accounts = ["wea", "tan", "sim", "td"]
-types = ["cheq", "bills", "credit"]
+types = ["cheq", "bills", "savings" "credit"]
 months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
 
 # The folder where the CSV files are stored, within the Repl environment
