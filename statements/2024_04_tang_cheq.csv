@@ -1,0 +1,27 @@
+Date,Transaction,Name,Memo,Amount
+7/1/2024,OTHER,INTERAC e-Transfer From: Curtis ,Transferred,56
+7/1/2024,ATM,Tangerine Credit Card Payment,Credit Card Payment,-50.13
+7/2/2024,OTHER,INTERAC e-Transfer To: My Wealth,Transferred,-200
+7/2/2024,OTHER,Overdraft Fee,,-5
+7/4/2024,OTHER,EFT Deposit from CANADA,From CANADA,129.75
+7/4/2024,OTHER,INTERAC e-Transfer From: Curtis ,Transferred,75.25
+7/7/2024,OTHER,INTERAC e-Transfer To: My Wealth,Transferred,-160
+7/12/2024,OTHER,INTERAC e-Transfer From: Curtis ,Transferred,165
+7/12/2024,OTHER,EFT Deposit CDACarbonRebate from,From CANADA,140
+7/13/2024,ATM,Tangerine Credit Card Payment,Credit Card Payment,-145
+7/20/2024,OTHER,INTERAC e-Transfer From: EMILY K,Transferred,1518
+7/23/2024,OTHER,INTERAC e-Transfer To: My Wealth,Transferred,-1518
+7/23/2024,DEBIT,Bill Payment - TD VISA - *******,BILLPO,-189.51
+7/23/2024,DEBIT,Bill Payment - SIMPLII FINANCIAL,BILLPO,-196.08
+7/23/2024,ATM,Tangerine Credit Card Payment,Credit Card Payment,-24.2
+7/23/2024,ATM,Withdrawal - ABM - TD BANK LONDO,TD BANK LONDON  ON  CA,-163.5
+7/23/2024,FEE,Interac Network Usage Charge,ABM Fee,-1.5
+7/25/2024,OTHER,INTERAC e-Transfer From: Curtis ,Transferred,160
+7/31/2024,OTHER,INTERAC e-Transfer From: Curtis ,Transferred,1518
+7/31/2024,OTHER,Interac - Purchase - FAMILY HOUS,FAMILY HOUSING-UOFT TORONTO  ON  CA,-1518
+7/31/2024,OTHER,Interac - Purchase - CHICK-FIL-A,CHICK-FIL-A YONGE AND TORONTO  O  CA,-17.96
+7/31/2024,OTHER,Interac - Purchase - PRES/55P6B7,PRES/55P6B7HV8J TORONTO  ON  CA,-3.3
+7/31/2024,ATM,Deposit - Scotiabank ABM - Cash,BLOOR & SPADINA 4 TORONTO  ON  CA,220
+7/31/2024,OTHER,Interac - Purchase - SHOPPERS DR,SHOPPERS DRUG MART #14 TORONTO  ON  CA,-27.34
+7/31/2024,OTHER,Interest Paid,,0
+7/31/2024,OTHER,Overdraft Interest Charged (July,NEGACR:2.64325,-2.64

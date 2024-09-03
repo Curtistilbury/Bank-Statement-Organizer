@@ -6,9 +6,33 @@ from openpyxl import load_workbook
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 # Lists of possible values
-accounts = ["wea", "tan", "sim", "td"]
-types = ["cheq", "bills", "savings" "credit"]
+accounts = ["wea", "tang", "sim", "td"]
+types = ["cheq", "bills", "credit", "savings"]
 months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
+
+# Column mapping for different accounts
+COLUMN_MAPPING = {
+    'wea': {
+        'date': 'Date',
+        'transaction': 'Transaction',
+        'description': 'Description',
+        'amount': 'Amount'
+    },
+    'tang': {
+        'transaction date': 'Date',
+        'transaction': 'Transaction',
+        'name': 'Description',
+        'amount': 'Amount'
+        # Memo is ignored
+    },
+    'sim': {
+        'date': 'Date',
+        'transaction': 'Description',
+        'funds out': 'Amount1',
+        'funds in': 'Amount2'
+        # Transaction is missing, needs to be filled with empty values
+    }
+}
 
 # The folder where the CSV files are stored, within the Repl environment
 folder_path = "./statements"
@@ -21,6 +45,76 @@ def is_valid_year(year):
 
 def is_valid_month(month):
     return month in months
+
+def apply_column_mapping(df, account):
+    if account in COLUMN_MAPPING:
+        mapping = COLUMN_MAPPING[account]
+        # Normalize column names to lowercase for case-insensitive matching
+        df.columns = df.columns.str.lower()
+        df = df.rename(columns={k.lower(): v for k, v in mapping.items()})
+        # Ensure only necessary columns are kept
+        valid_columns = {v for v in mapping.values()}
+        df = df.loc[:, df.columns.intersection(valid_columns)]
+
+        # Adding missing essential columns
+        for col in valid_columns:
+            if col not in df.columns:
+                df[col] = pd.NA
+
+    return df
+
+def validate_columns(df, account, account_type):
+    required_columns = ['Date', 'Transaction', 'Description', 'Amount']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+
+    if missing_columns:
+        print(f"Warning: Missing columns for account '{account}' with account type '{account_type}': {missing_columns}")
+        for col in missing_columns:
+            df[col] = pd.NA  # Add missing columns with NA values
+    return df
+
+def adjust_td_columns(df):
+    # Manually assigning column names based on the data structure of TD account statements
+    column_names = ['Date', 'Description', 'Amount1', 'Amount2']
+    df.columns = column_names
+
+    # Fill transaction with empty values
+    df['Transaction'] = ""
+
+    # Convert Amount1 to negative and Amount2 to positive
+    df['Amount1'] = df['Amount1'].apply(lambda x: -abs(x))
+    df['Amount2'] = df['Amount2'].apply(lambda x: abs(x))
+
+    # Merge Amount1 and Amount2 columns into a single Amount column
+    df['Amount'] = df['Amount1'].fillna(0) + df['Amount2'].fillna(0)
+
+    # Drop the original Amount1 and Amount2 columns
+    df.drop(columns=['Amount1', 'Amount2'], inplace=True)
+
+    return df
+
+def adjust_sim_columns(df):
+    # Manually assigning column names based on the data structure of SIM account statements
+    column_names = ['Date', 'Description', 'Amount1', 'Amount2']
+    df.columns = column_names
+
+    # Fill transaction with empty values
+    df['Transaction'] = ""
+
+    # Convert Amount1 (Funds Out) to negative and Amount2 (Funds In) to positive
+    df['Amount1'] = df['Amount1'].apply(lambda x: -abs(x))
+    df['Amount2'] = df['Amount2'].apply(lambda x: abs(x))
+
+    # Merge Amount1 and Amount2 columns into a single Amount column
+    df['Amount'] = df['Amount1'].fillna(0) + df['Amount2'].fillna(0)
+
+    # Drop the original Amount1 and Amount2 columns
+    df.drop(columns=['Amount1', 'Amount2'], inplace=True)
+
+    return df
+
+def log_columns(df, position, account, account_type):
+    print(f"Columns after {position} for account '{account}' with account type '{account_type}': {df.columns.tolist()}")
 
 def find_and_compile_csv_files():
     all_data = []  # This list will store DataFrames for each valid file
@@ -53,39 +147,58 @@ def find_and_compile_csv_files():
                 if is_valid_year(year) and is_valid_month(month) and account in accounts and account_type in types:
                     found_files.append(file_name)
 
-                    # Read the CSV file into a DataFrame
-                    df = pd.read_csv(file_path)
+                    if account == "td":
+                        # Read the CSV file without headers
+                        df = pd.read_csv(file_path, header=None)
+                        # Adjust columns specifically for TD
+                        df = adjust_td_columns(df)
+                    elif account == "sim":
+                        # Read the CSV file without headers
+                        df = pd.read_csv(file_path, header=None)
+                        # Adjust columns specifically for SIM
+                        df = adjust_sim_columns(df)
+                    else:
+                        # Read the CSV file into a DataFrame
+                        df = pd.read_csv(file_path)
+
+                    # Log columns before mapping
+                    log_columns(df, "before mapping", account, account_type)
+
+                    # Apply the column mapping based on the account
+                    df = apply_column_mapping(df, account)
+
+                    # Log columns after mapping
+                    log_columns(df, "after mapping", account, account_type)
+
+                    # Ensure columns are in proper order and remove invalid columns
+                    necessary_columns = ['Date', 'Transaction', 'Description', 'Amount']
+                    print(f"Before validate_columns for account '{account}' with account type '{account_type}': {df.columns.tolist()}")
+                    df = validate_columns(df, account, account_type)
+                    print(f"Before reordering for account '{account}' with account type '{account_type}': {df.columns.tolist()}")
+                    # Filter out unnecessary columns before reordering to `necessary_columns`
+                    df = df[[col for col in necessary_columns if col in df.columns]]
 
                     # Add metadata columns
-                    df['date'] = pd.to_datetime(df['date'], errors='coerce')  # Convert to datetime
-                    df['year'] = year
-                    df['account'] = account
-                    df['type'] = account_type
+                    df['Year'] = year
+                    df['Account'] = account
+                    df['Type'] = account_type
 
-                    # Ensure necessary columns are present
-                    necessary_columns = ['transaction', 'description', 'amount', 'balance']
-                    for col in necessary_columns:
-                        if col not in df.columns:
-                            df[col] = pd.NA
+                    # Format Amount column as numeric with two decimal places
+                    df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce').round(2)
 
-                    # Format Amount and Balance columns as numeric with two decimal places
-                    df['amount'] = pd.to_numeric(df['amount'], errors='coerce').round(2)
-                    df['balance'] = pd.to_numeric(df['balance'], errors='coerce').round(2)
-                    
-                    # Map lowercase columns to capitalized columns
-                    df.rename(columns={
-                        'date': 'Date',
-                        'year': 'Year',
-                        'account': 'Account',
-                        'type': 'Type',
-                        'transaction': 'Transaction',
-                        'description': 'Description',
-                        'amount': 'Amount',
-                        'balance': 'Balance'
-                    }, inplace=True)
+                    # Assign 'Date' as datetime and format
+                    df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
 
-                    # Order columns as specified
-                    df = df[['Date', 'Year', 'Account', 'Type', 'Transaction', 'Description', 'Amount', 'Balance']]
+                    if account in ["td", "sim"]:
+                        # Order columns as specified for TD and SIM
+                        df = df[['Date', 'Transaction', 'Description', 'Amount']]
+                    else:
+                        # Ensure 'Description' exists for non-TD accounts
+                        if 'Description' not in df.columns:
+                            df['Description'] = pd.NA
+
+                        # Order columns as specified for non-TD accounts
+                        df = df[['Date', 'Year', 'Account', 'Type', 'Transaction', 'Description', 'Amount']]
 
                     # Add this DataFrame to the list of all data
                     all_data.append(df)
@@ -118,7 +231,7 @@ def find_and_compile_csv_files():
         # Sort the combined DataFrame by the Date column
         combined_df.sort_values(by='Date', inplace=True)
         print("\nData successfully sorted by Date.")
-        
+
         # Define the path for the output Excel file outside the statements folder
         output_path = os.path.join(".", "combined_statements.xlsx")
 
@@ -130,7 +243,7 @@ def find_and_compile_csv_files():
         worksheet = workbook.active
 
         # Define the range and create a table
-        table = Table(displayName="CombinedDataTable", ref=f"A1:H{len(combined_df) + 1}")
+        table = Table(displayName="CombinedDataTable", ref=f"A1:G{len(combined_df) + 1}")
 
         # Add a default style with stripes
         style = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=False,
